@@ -1,0 +1,3 @@
+﻿  class-design.cpp
+C:\Users\Тимур Ахмадеев\source\repos\oop-essentials\class-design\class-design.cpp(356,1): warning C4326: возвращаемый тип "main" должен быть "int", а не "void"
+  class-design.vcxproj -> C:\Users\Тимур Ахмадеев\source\repos\oop-essentials\x64\Debug\class-design.exe
