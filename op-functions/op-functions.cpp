@@ -5,6 +5,7 @@
 #include <conio.h>
 #include <Windows.h>
 #include <locale.h>
+#include <stdlib.h>
 
 using namespace std;
 struct date { int d, m, y, h, min; };
@@ -20,15 +21,23 @@ struct card {
     int price;
     aero info;
 };
-int datcmp(date v, date w);
-int datcmp(date v, date w)
+
+ostream& operator<<(ostream& out, card& z);
+int operator>(card v, card w)
 {
-    if (v.y > w.y) return 1;
-    if ((v.y == w.y) && (v.m > w.m)) return 1;
-    if ((v.y == w.y) && (v.m == w.m) && (v.d > w.d)) return 1;
-    if ((v.y == w.y) && (v.m == w.m) && (v.d == w.d) && (v.h > w.h)) return 1;
-    if ((v.y == w.y) && (v.m == w.m) && (v.d == w.d) && (v.h == w.h) && (v.min > w.min)) return 1;
+    if (v.surname > w.surname) return 1;
+    if ((v.surname == w.surname) && (v.name > w.name)) return 1;
+    if ((v.surname == w.surname) && (v.name == w.name) && (v.patronymic > w.patronymic)) return 1;
     return 0;
+}
+ostream& operator<<(ostream& out, card& z)
+{
+    string fio;
+    fio = z.surname + " " + z.name + " " + z.patronymic;
+    out << setw(38) << fio << " | " << setw(8) << z.price << " | " << setw(16)
+        << z.info.city << " | " << setw(11) << z.info.num << " | " << setw(4) << z.info.dr.d
+        << " | " << setw(5) << z.info.dr.m << " | " << setw(5) << z.info.dr.y << " | " << setw(2) << z.info.dr.h << ":" << setw(2) << z.info.dr.min << " | \n";
+    return out;
 }
 
 class masA
@@ -42,6 +51,7 @@ public:
     masA() :px(NULL), n(0) {};
     masA(masA& z);
     ~masA() { if (px != NULL) delete[]px; }
+    masA& operator=(masA& z);
 
     // Методы класса masA:
     void inputFile();
@@ -52,7 +62,30 @@ public:
     void sortName();
     void sortPrice();
     void sortCity();
+    friend ostream& operator<<(ostream& out, masA& z);
 };
+
+ostream& operator<<(ostream& out, masA& z)
+{
+    int i;
+    // Вывод заголовка таблицы (массива структур)
+    out << "   _________________________________________________________________________________________________________________________\n";
+    out << "  |     |                                        |          |                  |             |     Дата и время вылета      |\n";
+    out << "  |  №  |                 Ф.И.О.                 |   Цена   | Пункт назначения | Номер рейса |______________________________| \n";
+    out << "  |     |                                        |          |                  |             | День | Месяц |  Год  | Время |\n";
+    out << "  |_____|________________________________________|__________|__________________|_____________|______|_______|_______|_______|\n";
+    out << "  |     |                                        |          |                  |             |      |       |       |       |\n";
+
+    // Вывод строк таблицы
+    for (i = 0; i < z.n; i++)
+        out << "  | " << setw(3) << i + 1 << " | " << z.px[i];
+    // out<<z.px[i]  это перегруженная операция вывода для структуры 
+    // типа card
+    out << "  |_____|________________________________________|__________|__________________|_____________|______|_______|_______|_______|\n";
+    system("pause");
+    return out;
+}
+
 masA::masA(masA& z)
 {
     int i;
@@ -64,6 +97,7 @@ masA::masA(masA& z)
         if (px == NULL)
         {
             cout << "Нет памяти\n";
+            system("pause");
             exit(1);
         }
         for (i = 0; i < n; i++)
@@ -72,6 +106,27 @@ masA::masA(masA& z)
         system("pause");
     }
 }
+masA& masA :: operator=(masA& z)
+{
+    int i;
+    if (this == &z) return *this;
+    if (px != NULL) delete[]px;
+    n = z.n;
+    if (z.px == NULL) px = NULL;
+    else {
+        px = new card[n];
+        if (px == NULL) {
+            cout << "нет памяти.\n";
+            cout << "операция присваивания.\n";
+            system("pause"); return z;
+        }
+        for (i = 0; i < n; i++)
+            px[i] = z.px[i];
+    }
+    return *this;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void masA::inputFile()   //  ввод исходного массива структур из файла
 {
     ifstream fin;
@@ -99,8 +154,6 @@ void masA::inputFile()   //  ввод исходного массива стру
         n++;
     }
     fin.close();
-
-
     fin.open(file.c_str());
     if (fin.fail()) {
         cout << file << "повторно не открывается\n";
@@ -135,7 +188,6 @@ void masA::addaero()
     }
 
     cout << "ФИО:"; cin >> t.surname >> t.name >> t.patronymic;
-    //t.name = t.name + " " + iniz;
     cout << "Цена билета:"; cin >> t.price;
     cout << "Пункт назначения:"; cin >> t.info.city;
     cout << "Номер рейса:"; cin >> t.info.num;
@@ -155,7 +207,6 @@ void masA::addaero()
 
     cout << "Запись добавлена.\n";
     system("pause");
-    //getch();
 }
 
 void masA::deleteaero()
@@ -167,7 +218,7 @@ void masA::deleteaero()
     output();                 //  вызов на экран массива структур
     cout << "Номер удаленой стороки:";
     cin >> j;
-    if (cin.fail())
+    /*if (cin.fail())
     {
         string s;
         cin.clear();
@@ -175,7 +226,7 @@ void masA::deleteaero()
         cout << "Это не номер строки \n";
         system("pause"); //getch();
         return;
-    }
+    }*/
 
     if (j < 1 || j >= n) {
         cout << "Ошибка: нет такой строки.\n";
@@ -189,11 +240,11 @@ void masA::deleteaero()
 
     cout << "Удалить?(y/n):"; cin >> ch;
     if (ch == 'n') return;               //     отказ удаления строки
-    if (ch == 'y') { cout << "Ошибка ответа на вопрос. \n"; system("pause"); return; }
+    if (ch != 'y') { cout << "Ошибка ответа на вопрос. \n"; system("pause"); return; }
 
     //   Выполнение удаления строки     
-    if (n == 1) { delete[] px; px = NULL; n = 0; }
-    else {
+    if (ch == 'y')
+    {
         p = new card[n - 1];
         if (p == NULL) {
             cout << "Нет памяти.\n ";
@@ -242,24 +293,13 @@ void masA::sortName()
     do {
         fl = 0; nn--;
         for (i = 0; i < nn; i++)
-            if (px[i].surname > px[i + 1].surname)
+            if (px[i] > px[i + 1])   //  это перегруженная операция  “>”
             {
-                fl = 1;  t = px[i];
+                fl = 1; t = px[i];
                 px[i] = px[i + 1];
                 px[i + 1] = t;
             }
-            else if (px[i].surname == px[i + 1].surname && px[i].name > px[i + 1].name)
-            {
-                fl = 1;  t = px[i];
-                px[i] = px[i + 1];
-                px[i + 1] = t;
-            }
-            else if (px[i].surname == px[i + 1].surname && px[i].name == px[i + 1].name && px[i].patronymic > px[i + 1].patronymic)
-            {
-                fl = 1;  t = px[i];
-                px[i] = px[i + 1];
-                px[i + 1] = t;
-            }
+
     } while (fl == 1);
     cout << "Массив структур упорядочен по ФИО в алфавитном порядке\n";
     //getch();
@@ -350,7 +390,7 @@ void masA::outputFile()
     system("pause");
 }
 
-void main()
+int main()
 {
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
@@ -369,9 +409,9 @@ void main()
         cout << "6. Сортировка исх. массива по Ф.И.О.\n";
         cout << "7. Сортировка исх. массива по пункту назначения\n";
         cout << "8. Сортировка исх. массива по цене\n";
-        cout << "9. Выход из программы\n";
-        cout << "10. Конструктор копирования\n";
-        cout << "11. Вывод копии исх. массива\n";
+        cout << "9. Проверка конструктора копирования для masА\n";
+        cout << "10. Проверка перегр-й операции присваивания для masА\n";
+        cout << "11. Выход из программы\n";
         cout << "Ваш выбор (1-11): ";
         cin >> j;
         //    Защита от неправильного ввода пункта меню
@@ -384,30 +424,31 @@ void main()
             system("pause");
             continue;          //   K следующей итерации
         }
-
         //    Реализация выбранного пункта меню
         switch (j)
         {
         case 1: a.inputFile(); break;
-        case 2: a.output(); break;
+        case 2: cout << a; break;
         case 3: a.outputFile(); break;
         case 4: a.addaero(); break;
         case 5: a.deleteaero(); break;
         case 6: a.sortName(); break;
         case 7: a.sortCity(); break;
         case 8: a.sortPrice(); break;
-        case 10:
+        case 9:
         {
             masA b(a);
-            a.output();
-            b.output();
+            cout << a;
+            cout << b;
         } break;
-        case 11: a.sortPrice(); break;
-        case 9: cout << "Конец работы\n"; return;
+        case 10:
+        {
+            masA f, d;
+            f = d = a;
+            cout << f; cout << d; cout << a;
+        } break;
+        case 11: cout << "Конец работы\n"; return 0;
         default: cout << "Нет такого пункта в меню\n"; system("pause"); break;
-
         } // конец switch()
-
     } // конец while()
-
 } // конец main()
